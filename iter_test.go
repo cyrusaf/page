@@ -37,10 +37,15 @@ type FakePager struct {
 }
 
 func (f *FakePager) Read(ctx context.Context, nextPage *int) ([]int, *int, error) {
+	page := 0
+	if nextPage != nil {
+		page = *nextPage
+	}
+
 	f.Invocations += 1
 	items := []int{}
 	for i := 0; i < f.Limit && f.Cursor < f.Items; i++ {
-		items = append(items, f.Cursor)
+		items = append(items, page+i)
 		f.Cursor += 1
 	}
 	if f.Cursor < f.Items {
