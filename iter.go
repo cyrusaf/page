@@ -16,7 +16,9 @@ func Iter[I, P any](ctx context.Context, readPage Read[I, P]) iter.Seq2[I, error
 			ts, nextPage, err = readPage(ctx, nextPage)
 			if err != nil {
 				var t I
-				yield(t, err)
+				if !yield(t, err) {
+					return
+				}
 			}
 			for _, t := range ts {
 				if !yield(t, nil) {
