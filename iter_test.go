@@ -2,6 +2,7 @@ package page_test
 
 import (
 	"context"
+	"iter"
 	"sync"
 	"testing"
 
@@ -38,8 +39,8 @@ func TestIterInterrupt(t *testing.T) {
 	}
 
 	i := 0
-	iter := page.Iter(ctx, f.Read)
-	for j, err := range iter {
+	pageIter := page.Iter(ctx, f.Read)
+	for j, err := range pageIter {
 		if err != nil {
 			t.Fatalf("expected err to be nil, but got %s instead", err.Error())
 		}
@@ -49,7 +50,7 @@ func TestIterInterrupt(t *testing.T) {
 		i++
 		break
 	}
-	for j, err := range iter {
+	for j, err := range pageIter {
 		if err != nil {
 			t.Fatalf("expected err to be nil, but got %s instead", err.Error())
 		}
@@ -60,6 +61,29 @@ func TestIterInterrupt(t *testing.T) {
 	}
 	if f.invocations != 5 {
 		t.Fatalf("expected 5 paginator invocations, but got %d instead", f.invocations)
+	}
+}
+
+func TestIterInitialization(t *testing.T) {
+	ctx := context.Background()
+	f := FakePager{
+		Items: 10,
+		Limit: 2,
+	}
+	pageIter := page.Iter(ctx, f.Read)
+	if f.Invocations() != 0 {
+		t.Fatalf("expected no pager invocations until first range")
+	}
+	next, stop := iter.Pull2(pageIter)
+	defer stop()
+
+	if f.Invocations() != 0 {
+		t.Fatalf("expected no pager invocations until first range")
+	}
+
+	_, _, _ = next()
+	if f.Invocations() != 1 {
+		t.Fatalf("expected 1 pager invocation after first call to iter")
 	}
 }
 
